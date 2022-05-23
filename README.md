@@ -7,6 +7,15 @@
 
 <br>
 
+/historical-data
+* Folder of csv files of raw/processed NBA data from 2000-2022
+
+/team-data
+* Folder of csv files of raw/processed NBA teams data
+
+/logos
+* Folder of all 30 NBA team logos
+
 **MostlmprovedPlayer.R**
 * R script that loads and visualizes data in graphical/tabular form
 
@@ -21,12 +30,3 @@
 
 nba_predictions_2022.csv
 * Model predictions, accompanying statistics for 2021-22 regular season
-
-/historical-data
-* Folder of csv files of raw/processed NBA data from 2000-2022
-
-/team-data
-* Folder of csv files of raw/processed NBA teams data
-
-/logos
-* Folder of all 30 NBA team logos
