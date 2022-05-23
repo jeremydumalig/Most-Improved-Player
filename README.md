@@ -7,14 +7,26 @@
 
 <br>
 
-POELTL.ipynb
-* Jupyter Notebook that cleans up data, writes functions to design game
+/historical-data
+* Folder of csv files of raw/processed NBA data from 2000-2022
 
-poeltl.csv
-* Player height, age, and team data from the 2021-2022 NBA season
+/team-data
+* Folder of csv files of raw/processed NBA teams data
 
-players.csv
-* Player position and jersey number data from the 20201-2022 NBA season
+/logos
+* Folder of all 30 NBA team logos
 
-allstars.csv
-* All-stars from NBA history
+MostlmprovedPlayer.R
+* R script that loads and visualizes data in graphical/tabular form
+
+MostImprovedPlayer.ipynb
+* Jupyter Notebook that trains random forest regression model and tests it on 2022 data
+
+NBA Scraper.ipynb
+* Jupyter Notebook that scrapes NBA.com for historical data
+
+Teams.ipynb
+* Jupyter Notebook that calculates teams' win differentials
+
+nba_predictions_2022.csv
+* Model predictions, accompanying statistics for 2021-22 regular season
