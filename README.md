@@ -16,16 +16,16 @@
 /logos
 * Folder of all 30 NBA team logos
 
-MostlmprovedPlayer.R
+**MostlmprovedPlayer.R
 * R script that loads and visualizes data in graphical/tabular form
 
-MostImprovedPlayer.ipynb
+**MostImprovedPlayer.ipynb
 * Jupyter Notebook that trains random forest regression model and tests it on 2022 data
 
-NBA Scraper.ipynb
+**NBA Scraper.ipynb
 * Jupyter Notebook that scrapes NBA.com for historical data
 
-Teams.ipynb
+**Teams.ipynb
 * Jupyter Notebook that calculates teams' win differentials
 
 nba_predictions_2022.csv
