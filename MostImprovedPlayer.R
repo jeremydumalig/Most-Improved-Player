@@ -1,3 +1,5 @@
+setwd("~/Downloads/Most Improved Player")
+
 library(tidyverse)
 library(ggplot2)
 library(ggnewscale)
@@ -8,16 +10,14 @@ library(cowplot)
 library(gt)
 rm(list=ls())
 
-
 # Load datasets
-nba21 <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba2021.csv")
-nba22 <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba2022.csv")
-adv21 <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba_advanced21.csv")
-adv22 <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba_advanced22.csv")
-predictions <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba_predictions_2022.csv")
-teams <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/teams_logo.csv")
-teams_d <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/teams_d.csv")
-nba_model <- read_csv(file="https://raw.githubusercontent.com/jeremydumalig/DataBank/master/nba_predictions_2022.csv")
+nba21 <- read_csv(file="historical-data/nba_traditional21.csv")
+nba22 <- read_csv(file="historical-data/nba_traditional22.csv")
+adv21 <- read_csv(file="historical-data/nba_advanced21.csv")
+adv22 <- read_csv(file="historical-data/nba_advanced22.csv")
+predictions <- read_csv(file="nba_predictions_2022.csv")
+teams <- read_csv(file="team-data/teams_logo.csv")
+teams_d <- read_csv(file="team-data/teams_d.csv")
 
 # Merge datasets into one dataframe
 nba <- merge(x=nba21, y=nba22, by="PLAYER", all=FALSE, suffixes = c("", ".new"))
@@ -25,48 +25,38 @@ adv <- merge(x=adv21, y=select(adv22, PLAYER, `USG%`), by="PLAYER", all=FALSE, s
 nba <- merge(x=nba, y=select(predictions, PLAYER, PRED_RF), by="PLAYER", all.x=TRUE)
 nba <- merge(x=nba, y=select(adv, PLAYER, `USG%`, `USG%.new`), by='PLAYER', all=FALSE)
 
-
 # Create new columns for per game stats, GP minimum
-nba <- mutate(nba, 
-              PPG = round(PTS / GP, 1),
-              PPG.new = round(PTS.new / GP.new, 1),
-              APG = round(AST / GP, 1),
-              APG.new = round(AST.new / GP.new, 1),
-              RPG = round(REB / GP, 1),
-              RPG.new = round(REB.new / GP.new, 1),
-              d_PPG = PPG.new - PPG,
-              d_AST = APG.new - APG,
-              d_REB = RPG.new - RPG,
+nba <- mutate(nba,
+              d_PPG = PTS.new - PTS,
+              d_AST = AST.new - AST,
+              d_REB = REB.new - REB,
               d_FGP = `FG%.new` - `FG%`,
               d_3PP = `3P%.new` - `3P%`,
-              MPG = round(MIN / GP, 1),
-              MPG.new = round(MIN.new / GP.new, 1),
-              d_MIN = MPG.new - MPG,
+              d_MIN = MIN.new - MIN,
               d_USG = `USG%.new` - `USG%`,
-              PLAYER = fct_reorder(PLAYER, desc(PPG.new)),
               Qualified = case_when(
                 (GP >= 41) & (GP.new >= 41) ~ "GP \u2265 41",
                 TRUE ~ "GP < 41"))
 
-
 # Create new dataframe of stat differentials
 d_nba <- select(filter(nba, Qualified == "GP \u2265 41"),
                 PLAYER,
-                d_PPG, PPG, PPG.new,
-                d_AST, APG, APG.new,
-                d_REB, RPG, RPG.new,
+                d_PPG, PTS, PTS.new,
+                d_AST, AST, AST.new,
+                d_REB, REB, REB.new,
                 d_FGP, d_3PP, d_MIN, d_USG)
 
-
 # Create list of MIP candidates
-player_candidates <- c('Darius Garland',
+player_candidates <- c('Anfernee Simons',
+                       'Darius Garland',
                        'Dejounte Murray', 
                        'Desmond Bane',
                        'Ja Morant', 
                        'Jordan Poole',
                        'Miles Bridges', 
                        'Tyrese Maxey')
-team_candidates <- c("Memphis Grizzlies", 
+team_candidates <- c("Portland Trail Blazers",
+                     "Memphis Grizzlies", 
                      "Golden State Warriors", 
                      "Philadelphia 76ers", 
                      "Cleveland Cavaliers", 
@@ -83,7 +73,8 @@ teams <- filter(teams, TEAM %in% team_candidates)
 teams_d <- filter(teams_d, TEAM %in% team_candidates)
 
 # Add color column to candidate dataframe
-candidates$HEX_CODE <- c("#860038", # Darius Garland
+candidates$HEX_CODE <- c("#E03A3E", # Anfernee Simons
+                         "#860038", # Darius Garland
                          "#C4CED4", # Dejounte Murray
                          "#5D76A9", # Desmond Bane
                          "#12173F", # Ja Morant
@@ -91,6 +82,8 @@ candidates$HEX_CODE <- c("#860038", # Darius Garland
                          "#00788C", # Miles Bridges
                          "#ED174C") # Tyrese Maxey
 adv_candidates$HEX_CODE <- candidates$HEX_CODE
+
+##################################################
 
 # Create ggplot theme
 theme_borders <- 
@@ -110,7 +103,7 @@ theme_borders <-
 
 # Create plot for PPG differentials
 candidates_ppg <- ggplot(candidates) + 
-  geom_dumbbell(aes(x=PPG, xend=PPG.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
+  geom_dumbbell(aes(x=PTS, xend=PTS.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
                 size_x=4,
                 size_xend=8,
                 show.legend = FALSE) +
@@ -129,7 +122,7 @@ candidates_ppg <- ggplot(candidates) +
 
 # Create plot for APG differentials
 candidates_ast <- ggplot(candidates) + 
-  geom_dumbbell(aes(x=APG, xend=APG.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
+  geom_dumbbell(aes(x=AST, xend=AST.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
                 size_x=4,
                 size_xend=8,
                 show.legend = FALSE) +
@@ -143,7 +136,7 @@ candidates_ast <- ggplot(candidates) +
 
 # Create plot for RPG differentials
 candidates_reb <- ggplot(candidates) + 
-  geom_dumbbell(aes(x=RPG, xend=RPG.new, y=forcats::fct_rev(factor(PLAYER)), group=PLAYER, color=PLAYER),
+  geom_dumbbell(aes(x=REB, xend=REB.new, y=forcats::fct_rev(factor(PLAYER)), group=PLAYER, color=PLAYER),
                 size_x=4,
                 size_xend=8,
                 show.legend = FALSE) +
@@ -183,7 +176,7 @@ candidates_3pp <- ggplot(candidates) +
 
 # Create plot for MIP candidates' minute differentials
 candidates_min <- ggplot(candidates) + 
-  geom_dumbbell(aes(x=MPG, xend=MPG.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
+  geom_dumbbell(aes(x=MIN, xend=MIN.new, y=reorder(PLAYER, desc(PLAYER)), group=PLAYER, color=PLAYER),
                 size_x=4,
                 size_xend=8,
                 show.legend = FALSE) +
@@ -210,7 +203,7 @@ candidates_usg <- ggplot(adv_candidates) +
   theme(plot.title = element_text(hjust = 0.5))
 
 # Create plot for teams' win differentials, sorted by W
-team_colors <- c("#00788C", "#860038", "#FFC72C", "#5D76A9", "#ED174C", "#C4CED4")
+team_colors <- c("#E03A3E", "#00788C", "#860038", "#FFC72C", "#5D76A9", "#ED174C", "#C4CED4")
 team_wins <- ggplot(data=teams) +
   geom_line(aes(x=factor(Season), y=W, color=TEAM, group=TEAM), size=1) + 
   geom_image(aes(image = URL, x=factor(Season), y=W), asp=0.75, size=0.075, by="height") +
@@ -222,59 +215,69 @@ team_wins <- ggplot(data=teams) +
   theme_borders +
   theme(legend.position = "none")
 
-# Create plot for model residuals
-scatter_residuals <- ggplot(data=nba_model) +
-  geom_hline(yintercept=0, linetype='dashed') +
-  geom_point(aes(x=PRED_RF, y=RES_RF),
-             color='#C9082A',
-             shape=1,
-             size=3) +
-  xlim(0, 32) +
-  ylim(-8, 8) +
-  labs(title="Model Residuals",
-       x="Predicted Points Per Game",
-       y="Residuals") +
-  theme_borders
+##################################################
 
-# Create plot for model residuals
-histogram_residuals <- ggplot(data=nba_model) +
-  geom_histogram(aes(x=RES_RF), 
-                 color='#17408B',
-                 fill='#6495ED',
-                 bins=25) +
-  xlim(-8, 8) +
-  coord_flip() +
-  labs(title="", x="", y="") +
-  theme_borders
+# Create function to make differentials more readable
+differential_sign <- function(number) {
+  if (substr( format(number, nsmall=1), 1, 1 ) != "-") {
+    return( paste("+", format(number, nsmall=1), sep="") )
+  } else {
+    return( number )
+  }
+}
 
+# Add +/- signs in front of differentials
+teams_d <- 
+  teams_d %>%
+  arrange(desc(d_W)) %>%
+  mutate(d_W = map(teams_d$d_W, differential_sign))
+candidates <- mutate(candidates,
+                     d_PPG = map(d_candidates$d_PPG, differential_sign),
+                     d_AST = map(d_candidates$d_AST, differential_sign),
+                     d_REB = map(d_candidates$d_REB, differential_sign),
+                     d_FGP = map(d_candidates$d_FGP, differential_sign),
+                     d_3PP = map(d_candidates$d_3PP, differential_sign),
+                     d_MIN = map(d_candidates$d_MIN, differential_sign),
+                     d_USG = map(d_candidates$d_USG, differential_sign))
 
 # Display candidates' changes
+
 productivity_table <- select(d_candidates, 
-                             PLAYER, PPG, PPG.new, APG, APG.new, RPG, RPG.new) %>%
+                             PLAYER, 
+                             PTS, d_PPG, PTS.new, 
+                             AST, d_AST, AST.new, 
+                             REB, d_REB, REB.new) %>%
   gt() %>%
   tab_style(
     style = list(cell_text(weight = "bold")),
     locations = cells_body(columns = PLAYER)
   ) %>%
+  tab_style(
+    style = list(cell_text(style = "italic", size="small")),
+    locations = cells_body(columns = c(d_PPG, d_AST, d_REB))
+  ) %>%
   tab_spanner(
     label = "PTS",
-    columns = c(PPG, PPG.new)
+    columns = c(PTS, d_PPG, PTS.new)
   ) %>%
   tab_spanner(
     label = "APG",
-    columns = c(APG, APG.new)
+    columns = c(AST, d_AST, AST.new)
   ) %>%
   tab_spanner(
     label = "RPG",
-    columns = c(RPG, RPG.new)
+    columns = c(REB, d_REB, REB.new)
   ) %>%
   cols_label(
-    PPG = "2021",
-    APG = "2021",
-    RPG = "2021",
-    PPG.new = "2022",
-    APG.new = "2022",
-    RPG.new = "2022"
+    d_PPG = "",
+    d_AST = "",
+    d_REB = "",
+    PTS = "2021",
+    AST = "2021",
+    REB = "2021",
+    PTS.new = "2022",
+    AST.new = "2022",
+    REB.new = "2022"
   ) %>% 
   tab_header( 
     title = md("**Year-to-Year Comparison**"),
@@ -283,22 +286,28 @@ productivity_table <- select(d_candidates,
 # Display candidates' changes
 efficiency_table <- select(candidates, 
                            PLAYER, 
-                           `FG%`, `FG%.new`, 
-                           `3P%`, `3P%.new`) %>%
+                           `FG%`, d_FGP, `FG%.new`, 
+                           `3P%`, d_3PP, `3P%.new`) %>%
   gt() %>%
   tab_style(
     style = list(cell_text(weight = "bold")),
     locations = cells_body(columns = PLAYER)
   ) %>%
+  tab_style(
+    style = list(cell_text(style = "italic", size="small")),
+    locations = cells_body(columns = c(d_FGP, d_3PP))
+  ) %>%
   tab_spanner(
     label = "FG%",
-    columns = c(`FG%`, `FG%.new`)
+    columns = c(`FG%`, d_FGP, `FG%.new`)
   ) %>%
   tab_spanner(
     label = "3P%",
-    columns = c(`3P%`, `3P%.new`)
+    columns = c(`3P%`, d_3PP, `3P%.new`)
   ) %>%
   cols_label(
+    d_FGP = "",
+    d_3PP = "",
     `FG%` = "2021",
     `3P%` = "2021",
     `FG%.new` = "2022",
@@ -311,25 +320,31 @@ efficiency_table <- select(candidates,
 # Display candidates' changes
 role_table <- select(candidates, 
                      PLAYER, 
-                     MPG, MPG.new, 
-                     `USG%`, `USG%.new`) %>%
+                     MIN, d_MIN, MIN.new, 
+                     `USG%`, d_USG, `USG%.new`) %>%
   gt() %>%
   tab_style(
     style = list(cell_text(weight = "bold")),
     locations = cells_body(columns = PLAYER)
   ) %>%
+  tab_style(
+    style = list(cell_text(style = "italic", size="small")),
+    locations = cells_body(columns = c(d_MIN, d_USG))
+  ) %>%
   tab_spanner(
     label = "MIN",
-    columns = c(MPG, MPG.new)
+    columns = c(MIN, d_MIN, MIN.new)
   ) %>%
   tab_spanner(
     label = "USG%",
-    columns = c(`USG%`, `USG%.new`)
+    columns = c(`USG%`, d_USG, `USG%.new`)
   ) %>%
   cols_label(
-    MPG = "2021",
+    d_MIN = "",
+    d_USG = "",
+    MIN = "2021",
     `USG%` = "2021",
-    MPG.new = "2022",
+    MIN.new = "2022",
     `USG%.new` = "2022"
   ) %>% 
   tab_header( 
@@ -337,18 +352,23 @@ role_table <- select(candidates,
     subtitle = "Most Improved Player Candidates")
 
 # Display candidates' changes
-teams_table <- select(arrange(teams_d, desc(W21)), 
-                      TEAM, W21, W22) %>%
+teams_table <- select(teams_d, 
+                      TEAM, W21, d_W, W22) %>%
   gt() %>%
   tab_style(
     style = list(cell_text(weight = "bold")),
     locations = cells_body(columns = TEAM)
   ) %>%
+  tab_style(
+    style = list(cell_text(style = "italic", size="small")),
+    locations = cells_body(columns = c(d_W))
+  ) %>%
   tab_spanner(
     label = "Wins",
-    columns = c(W21, W22)
+    columns = c(W21, d_W, W22)
   ) %>%
   cols_label(
+    d_W = "",
     W21 = "2021",
     W22 = "2022"
   ) %>% 
@@ -356,46 +376,13 @@ teams_table <- select(arrange(teams_d, desc(W21)),
     title = md("**Year-to-Year Comparison**"),
     subtitle = "Most Improved Player Candidates' Teams")
 
-# Display model predictions/residuals
-model_table <- head(nba_model,
-                    10) %>%
-  gt() %>%
-  tab_style(
-    style = list(cell_text(weight = "bold")),
-    locations = cells_body(columns = PLAYER)
-  ) %>% 
-  cols_label(PPG2 = "PPG") %>%
-  tab_footnote(
-    footnote = "2020-21 PPG",
-    locations = cells_column_labels( 
-      columns = PPG
-    )
-  ) %>% 
-  tab_footnote(
-    footnote = "2021-22 PPG",
-    locations = cells_column_labels( 
-      columns = PPG2
-    )
-  ) %>% 
-  tab_footnote(
-    footnote = "Model Prediction",
-    locations = cells_column_labels( 
-      columns = PRED_RF
-    )
-  ) %>% 
-  tab_footnote(
-    footnote = "Model Residual",
-    locations = cells_column_labels(columns = RES_RF)
-  ) %>%
-  tab_header( 
-    title = md("**2021-22 Regular Season: Out-Performers**"), # Under-Performers
-    subtitle = "Random Forest Model Results")
-
 # Display candidates' differentials for all stats
-master_table <- select(d_candidates, 
+candidates$W <- c("-15", "+22", "+1", "+18", "+18", "+14", "+10", "+2")
+master_table <- select(candidates, 
                        PLAYER, 
                        d_MIN, d_PPG, d_AST, d_REB, 
-                       d_FGP, d_3PP, d_USG) %>%
+                       d_FGP, d_3PP, d_USG,
+                       W) %>%
   gt() %>%
   tab_style(
     style = list(cell_text(weight = "bold")),
@@ -408,6 +395,10 @@ master_table <- select(d_candidates,
   tab_spanner(
     label = "Percentages",
     columns = c(d_FGP, d_3PP, d_USG)
+  ) %>%
+  tab_spanner(
+    label = "Team",
+    columns = c(W)
   ) %>%
   cols_label(
     d_PPG = "PTS",
@@ -422,17 +413,16 @@ master_table <- select(d_candidates,
     title = md("**Year-to-Year Differentials**"),
     subtitle = "Most Improved Player Candidates")
 
+##################################################
 
 # Display plots
 grid.arrange(candidates_ppg, arrangeGrob(candidates_ast, candidates_reb, ncol=2))
 grid.arrange(candidates_fgp, candidates_3pp, nrow=2)
 grid.arrange(candidates_min, candidates_usg, nrow=2)
 team_wins
-plot_grid(scatter_residuals, histogram_residuals, ncol=2, rel_widths=c(3/4, 1/4))
 
 productivity_table
 efficiency_table
 role_table
 teams_table
-model_table
 master_table
