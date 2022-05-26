@@ -2,7 +2,7 @@
 
 *This project seeks to review the 2022 Most Improved Player award race as well as re-evaluate its selection criteria. The full project can be found [here](https://jeremydumalig.com/most-improved-player/).*
 
-*Packages/Libraries Used : numpy, pandas * <br>
+*Packages/Libraries Used : numpy, pandas* <br>
 *Packages/Libraries Used : tidyverse, ggplot, ggnewscale, ggalt, gridExtra, ggimage, cowplot, gt*
 
 <br>
