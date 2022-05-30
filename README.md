@@ -2,7 +2,7 @@
 
 *This project seeks to review the 2022 Most Improved Player award race as well as re-evaluate its selection criteria. The full project can be found [here](https://jeremydumalig.com/most-improved-player/).*
 
-*Packages/Libraries Used : numpy, pandas, sklearn.ensemble, BeautifulSoup, selenium* <br>
+*Packages/Libraries Used : numpy, pandas* <br>
 *Packages/Libraries Used : tidyverse, ggplot, ggnewscale, ggalt, gridExtra, ggimage, cowplot, gt*
 
 <br>
@@ -18,12 +18,6 @@
 
 **MostlmprovedPlayer.R**
 * R script that loads and visualizes data in graphical/tabular form
-
-**MostImprovedPlayer.ipynb**
-* Jupyter Notebook that trains random forest regression model and tests it on 2022 data
-
-**NBA Scraper.ipynb**
-* Jupyter Notebook that scrapes NBA.com for historical data
 
 **Teams.ipynb**
 * Jupyter Notebook that calculates teams' win differentials
