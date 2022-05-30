@@ -1,5 +1,3 @@
-setwd("~/Downloads/Most Improved Player")
-
 library(tidyverse)
 library(ggplot2)
 library(ggnewscale)
@@ -113,8 +111,7 @@ candidates_ppg <- ggplot(candidates) +
   scale_y_discrete(limits=rev(player_candidates)) +
   scale_color_manual(breaks=player_candidates,
                      values = candidates$HEX_CODE) +
-  labs(title="Top Candidates for Most Improved Player",
-       x="Points Per Game (2021 vs 2022)", 
+  labs(x="Points Per Game (2021 vs 2022)", 
        y="Player") +
   xlim(0, 28) +
   theme_borders +
@@ -155,8 +152,7 @@ candidates_fgp <- ggplot(candidates) +
                 size_xend=8,
                 show.legend = FALSE) +
   scale_color_manual(values = candidates$HEX_CODE) +
-  labs(title='Field Goal Percentage Differentials', 
-       x="Field Goal Percentage (2021 vs 2022)", 
+  labs(x="Field Goal Percentage (2021 vs 2022)", 
        y="Player") +
   xlim(30, 51) +
   theme_borders
@@ -168,8 +164,7 @@ candidates_3pp <- ggplot(candidates) +
                 size_xend=8,
                 show.legend = FALSE) +
   scale_color_manual(values = candidates$HEX_CODE) +
-  labs(title='3-Point Percentage Differentials', 
-       x="3-Point Percentage (2021 vs 2022)", 
+  labs(x="3-Point Percentage (2021 vs 2022)", 
        y="Player") +
   xlim(30, 51) +
   theme_borders
@@ -181,8 +176,7 @@ candidates_min <- ggplot(candidates) +
                 size_xend=8,
                 show.legend = FALSE) +
   scale_color_manual(values = candidates$HEX_CODE) +
-  labs(title="Minute Differentials",
-       x="Minutes Per Game (2021 vs 2022)", 
+  labs(x="Minutes Per Game (2021 vs 2022)", 
        y="Player") +
   xlim(15, 36) +
   theme_borders +
@@ -195,8 +189,7 @@ candidates_usg <- ggplot(adv_candidates) +
                 size_xend=8,
                 show.legend = FALSE) +
   scale_color_manual(values = candidates$HEX_CODE) +
-  labs(title="Usage Rate Differentials",
-       x="Usage Rate (2021 vs 2022)", 
+  labs(x="Usage Rate (2021 vs 2022)", 
        y="Player") +
   xlim(15, 36) +
   theme_borders +
@@ -222,7 +215,7 @@ differential_sign <- function(number) {
   if (substr( format(number, nsmall=1), 1, 1 ) != "-") {
     return( paste("+", format(number, nsmall=1), sep="") )
   } else {
-    return( number )
+    return( paste("-", format(abs(number), nsmall=1), sep="") )
   }
 }
 
@@ -241,8 +234,7 @@ candidates <- mutate(candidates,
                      d_USG = map(d_candidates$d_USG, differential_sign))
 
 # Display candidates' changes
-
-productivity_table <- select(d_candidates, 
+productivity_table <- select(candidates, 
                              PLAYER, 
                              PTS, d_PPG, PTS.new, 
                              AST, d_AST, AST.new, 
@@ -376,6 +368,30 @@ teams_table <- select(teams_d,
     title = md("**Year-to-Year Comparison**"),
     subtitle = "Most Improved Player Candidates' Teams")
 
+# Display model predictions/residuals
+pred_candidates <- mutate(pred_candidates,
+                          RES_RF = map(RES_RF, differential_sign))
+
+model_table <- select(pred_candidates,
+                      RANK, PLAYER, PRED_RF, RES_RF, PPG2) %>%
+  gt() %>%
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = cells_body(columns = PLAYER)
+  ) %>%
+  tab_style(
+    style = list(cell_text(style = "italic", size="small")),
+    locations = cells_body(columns = c(RES_RF))
+  ) %>%
+  cols_label(
+    PRED_RF = "Prediction",
+    PPG2 = "Actual",
+    RES_RF = ""
+  ) %>%
+  tab_header( 
+    title = md("**Most Improved Player Candidates**"),
+    subtitle = "Random Forest Model Results")
+
 # Display candidates' differentials for all stats
 candidates$W <- c("-15", "+22", "+1", "+18", "+18", "+14", "+10", "+2")
 master_table <- select(candidates, 
@@ -425,4 +441,5 @@ productivity_table
 efficiency_table
 role_table
 teams_table
+model_table
 master_table
